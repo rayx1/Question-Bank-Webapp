@@ -1,32 +1,54 @@
 # Question Bank Webapp
 
-A PHP-MySQL web application for managing and searching a question bank with auto-calculated exam probability. This application lets administrators add questions (with PDF/image attachments), view a dashboard, and automatically compute a probability indicator based on historical exam records. The public interface offers responsive search functionality using Bootstrap, where "Subject" is mandatory and optional filters include "Year" and "Minimum Importance" (probability).
+A PHP-MySQL web application designed for educators and students to manage and search a question bank with auto-calculated exam probability. The project features a responsive and modern user interface built using Bootstrap and includes both a public search interface and an admin panel for managing questions.
+
+> **Important Note:**  
+> For demonstration purposes, admin passwords are stored using MD5 hashing. For a production system, please use stronger password hashing methods (e.g., `password_hash()` and `password_verify()` with bcrypt).
+
+---
 
 ## Features
 
 - **Public Interface:**
-  - **Search & Filtering:**  
-    - Subject (mandatory)
-    - Year (optional)
-    - Minimum Importance (optional, based on probability percentage)
-  - **Display:** A responsive table displaying question details including subject, year, question text, answer, and probability.
-  - **File Management:** Ability to view or download attached PDF or image files.
-  
+  - **Responsive Search Form:**  
+    - Subject field is mandatory (with auto-complete suggestions using jQuery UI).  
+    - Optional filters for Year and Minimum Importance (Probability).
+  - **Search Results:**  
+    - Displays matching questions filtered and sorted by the auto-calculated probability.
+    - Lists details including Subject, Year, Question, Answer, and Probability.
+  - **File Download/Preview:**  
+    - Questions may include an attached PDF or image file that users can view or download.
+
 - **Admin Panel:**
-  - **Secure Login:** Admins can log in to access the dashboard.
-  - **Dashboard:** View all questions with options to add, edit, or delete.
-  - **Add Questions:** Form to add new questions, including file uploads (PDF, JPG, JPEG, or PNG) and auto-calculated probability based on keyword matching, full-text search, and recency weighting.
-  - **Logout:** Secure termination of the admin session.
-  
-- **Advanced Probability Calculation:**
-  - Uses full-text search and recency weighting (via PHP functions) to compute the likelihood of a question (or similar ones) appearing in future exams.
-  
-- **Responsive Design:**
-  - Built using Bootstrap to ensure the UI is mobile-friendly and responsive.
+  - **Secure Login:**  
+    - Admins log in with their username and MD5-hashed password.
+  - **Dashboard:**  
+    - View, edit, and delete questions.
+    - See a list of questions with details and the computed probability for each.
+  - **Add New Question:**  
+    - Form to input Subject, Year, Question, Answer, and an optional file upload.
+    - Auto-calculates the probability based on keyword matching, MySQL full‑text search, and recency weighting.
+    - Includes auto-complete functionality for the Subject field.
+  - **Edit Question:**  
+    - Pre-populated form for editing question details.
+    - Option to replace the existing file.
+    - Automatically recalculates the probability based on the updated data.
+  - **Secure Logout:**  
+    - Ends the admin session.
+
+- **Advanced Functionality:**
+  - **Subject Auto-Complete:**  
+    - Utilizes an AJAX endpoint (`subject_autocomplete.php`) and jQuery UI to auto-fill the subject field.
+  - **Probability Calculation:**  
+    - Employs full‑text search and recency weighting logic (implemented in PHP in `functions.php`) to compute a percentage value representing the likelihood of a question appearing in an exam.
+  - **Responsive Design:**  
+    - Built with Bootstrap and includes a mobile-friendly layout.
+
+---
 
 ## File Structure
 
-question-bank/ ├── admin/ │ ├── add_question.php # Add new question with file upload and probability calculation. │ ├── dashboard.php # Dashboard displaying all questions. │ ├── login.php # Admin login page. │ └── logout.php # Admin logout. ├── config.php # Database connection settings. ├── download.php # Script to force file downloads. ├── functions.php # Common functions (keyword extraction, probability calculation). ├── index.php # Public search page. ├── install.sql # SQL script for database schema and sample data. └── .htaccess # Rewrite and security settings.
+question-bank/ ├── admin/ │ ├── add_question.php # Form to add new questions (with file upload and auto-complete for subject). │ ├── dashboard.php # Admin dashboard listing all questions (with options to edit or delete). │ ├── edit_question.php # Form to edit an existing question (pre-populated fields and auto-complete). │ ├── login.php # Admin login page with MD5 password verification. │ └── logout.php # Script to destroy the session and log out the admin. ├── config.php # Database connection settings. ├── download.php # Script to force file downloads for attached files. ├── functions.php # Common functions (keyword extraction, probability calculation). ├── index.php # Public search page (with subject auto-complete and optional filtering). ├── install.sql # SQL script to create the required database schema. ├── subject_autocomplete.php # AJAX endpoint returning JSON array of distinct subjects. └── .htaccess # Apache rewrite and security configuration.
 
 ## Database Setup:
 Create a MySQL database (e.g., question_bank) and update your credentials in config.php if needed.
@@ -68,6 +90,14 @@ Use the Add New Question button in the dashboard.
 Fill in the fields (subject, year, question, answer) and choose a file if needed.
 
 On submission, the application auto-calculates the probability based on historical exam records using keyword matching, full-text search, and recency weighting.
+
+# Edit Question (admin/edit_question.php):
+
+Modify existing question data (fields are pre-populated).
+
+Optionally update the attachment.
+
+The probability is recalculated on update.
 
 # Logout:
 
