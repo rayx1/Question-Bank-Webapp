@@ -90,7 +90,7 @@ probability	FLOAT	Auto-calculated probability (%)
 Field	Type	Description
 id	INT AUTO_INCREMENT	Primary Key
 username	VARCHAR(100)	Admin username
-password	VARCHAR(255)	Admin password (plain text for demo)
+password	VARCHAR(255)	Admin password (MD5)
 
 # exam_history
 Field	Type	Description
@@ -109,8 +109,19 @@ Redirect non-existing URLs to index.php for friendly URLs.
 
 Optionally, enforce HTTPS.
 
+--
+
+### Notes on MD5 Usage
+
+- **Security Notice:**  
+  MD5 is used here solely for demonstration purposes. In production, consider using more secure alternatives like `password_hash()` and `password_verify()` with the bcrypt algorithm.
+
+You can now include this `README.md` file in your GitHub repository to provide a comprehensive guide for installation, usage, and an overview of the database schema.
+
 ## Contributing
 Feel free to fork this repository, make improvements, or add features. Pull requests are welcome!
 
 ## License
 This project is open source and available under the MIT License.
+
+
