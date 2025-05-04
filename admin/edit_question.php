@@ -7,15 +7,31 @@ if (!isset($_SESSION['admin'])) {
 include '../config.php';
 include '../functions.php';
 
+// Check if 'id' is provided in the URL
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    die("No question ID provided.");
+}
+
+$id = (int)$_GET['id'];
+
+// Fetch the question information from the database
+$sql = "SELECT * FROM questions WHERE id = $id LIMIT 1";
+$result = $conn->query($sql);
+if ($result->num_rows == 0) {
+    die("Question not found.");
+}
+$questionRow = $result->fetch_assoc();
+
+// Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Sanitize and retrieve input fields
     $subject  = $conn->real_escape_string($_POST['subject']);
     $year     = $conn->real_escape_string($_POST['year']);
-    $question = $_POST['question'];  // using raw text for keyword extraction
+    $question = $_POST['question']; // Raw text for keyword extraction
     $answer   = $conn->real_escape_string($_POST['answer']);
     
-    // File upload handling (if a file is provided)
-    $file_path = "";
+    // File upload handling
+    $file_path = $questionRow['file_path']; // Default: use existing file
     if (isset($_FILES['upload']) && $_FILES['upload']['error'] === 0) {
         $allowedExt = array('pdf', 'jpg', 'jpeg', 'png');
         $fileName   = $_FILES['upload']['name'];
@@ -31,34 +47,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (move_uploaded_file($fileTmpName, $upload_dir . $newFileName)) {
                 $file_path = $newFileName;
             } else {
-                $error = "Failed to upload the file.";
+                $error = "Failed to upload the new file.";
             }
         } else { 
             $error = "Invalid file type. Allowed types: PDF, JPG, JPEG, PNG.";
         }
     }
     
-    // Auto-calculate probability using the advanced function from functions.php.
+    // Re-calculate probability based on updated question details
     $calculatedProbability = calculateAutoProbabilityRecency($question, $subject, $year, $conn);
     
-    // Escape question text for safe SQL insertion.
     $questionEscaped = $conn->real_escape_string($question);
-    $sql = "INSERT INTO questions (subject, year, question, answer, file_path, probability)
-            VALUES ('$subject', '$year', '$questionEscaped', '$answer', '$file_path', '$calculatedProbability')";
+    $sqlUpdate = "UPDATE questions SET 
+                    subject = '$subject', 
+                    year = '$year', 
+                    question = '$questionEscaped', 
+                    answer = '$answer', 
+                    file_path = '$file_path', 
+                    probability = '$calculatedProbability'
+                  WHERE id = $id";
     
-    if ($conn->query($sql) === TRUE) {
+    if ($conn->query($sqlUpdate) === TRUE) {
         header("Location: dashboard.php");
         exit;
     } else {
-        $error = "Error: " . $conn->error;
+        $error = "Error updating record: " . $conn->error;
     }
+    
+    // Optionally, re-fetch the updated row (if you want to display it again)
+    $result = $conn->query("SELECT * FROM questions WHERE id = $id LIMIT 1");
+    $questionRow = $result->fetch_assoc();
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Add New Question</title>
+  <title>Edit Question</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Bootstrap CSS CDN -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
@@ -67,32 +92,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
   <div class="container mt-4">
-    <h2 class="text-center">Add New Question</h2>
+    <h2 class="text-center">Edit Question</h2>
     <?php if (isset($error)) : ?>
       <div class="alert alert-danger text-center"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
-    <form method="POST" action="add_question.php" enctype="multipart/form-data">
+    <form method="POST" action="edit_question.php?id=<?php echo $id; ?>" enctype="multipart/form-data">
       <div class="form-group">
         <label>Subject:</label>
-        <input type="text" id="subject" class="form-control" name="subject" required>
+        <input type="text" id="subject" class="form-control" name="subject" value="<?php echo htmlspecialchars($questionRow['subject']); ?>" required>
       </div>
       <div class="form-group">
         <label>Year:</label>
-        <input type="text" class="form-control" name="year" required>
+        <input type="text" class="form-control" name="year" value="<?php echo htmlspecialchars($questionRow['year']); ?>" required>
       </div>
       <div class="form-group">
         <label>Question:</label>
-        <textarea class="form-control" name="question" rows="5" required></textarea>
+        <textarea class="form-control" name="question" rows="5" required><?php echo htmlspecialchars($questionRow['question']); ?></textarea>
       </div>
       <div class="form-group">
         <label>Answer:</label>
-        <textarea class="form-control" name="answer" rows="5" required></textarea>
+        <textarea class="form-control" name="answer" rows="5" required><?php echo htmlspecialchars($questionRow['answer']); ?></textarea>
       </div>
       <div class="form-group">
-        <label>Upload PDF/Image (optional):</label>
+        <label>Current File:</label>
+        <?php if ($questionRow['file_path']) : ?>
+          <a href="../uploads/<?php echo htmlspecialchars($questionRow['file_path']); ?>" target="_blank">View File</a>
+        <?php else : ?>
+          N/A
+        <?php endif; ?>
+      </div>
+      <div class="form-group">
+        <label>Upload New PDF/Image (optional, to replace current):</label>
         <input type="file" class="form-control-file" name="upload">
       </div>
-      <button type="submit" class="btn btn-primary">Add Question</button>
+      <button type="submit" class="btn btn-primary">Update Question</button>
       <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
     </form>
   </div>
@@ -100,7 +133,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Initialize JQuery UI Autocomplete on the Subject field -->
+  <!-- Initialize jQuery UI Autocomplete on the Subject field -->
   <script>
     $(document).ready(function(){
       $("#subject").autocomplete({

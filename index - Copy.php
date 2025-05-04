@@ -3,6 +3,8 @@ include 'config.php';
 
 $message = "";
 $results = null;
+
+// Retrieve search parameters (GET request)
 $subject = isset($_GET['subject']) ? trim($_GET['subject']) : "";
 $year = isset($_GET['year']) ? trim($_GET['year']) : "";
 $minProbability = isset($_GET['minProbability']) ? (float)$_GET['minProbability'] : 0;
@@ -34,8 +36,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && empty($subject)) {
   <title>Question Bank - Search</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-  <!-- jQuery UI CSS for Autocomplete -->
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 </head>
 <body>
   <div class="container mt-4">
@@ -93,19 +93,8 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && empty($subject)) {
     <?php endif; ?>
   </div>
 
-  <!-- jQuery, jQuery UI, and Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <!-- Initialize jQuery UI Autocomplete for the subject field -->
-  <script>
-    $(document).ready(function(){
-      $("#subject").autocomplete({
-        source: "subject_autocomplete.php", // fetch subjects from this endpoint
-        minLength: 1
-      });
-    });
-  </script>
 </body>
 </html>
